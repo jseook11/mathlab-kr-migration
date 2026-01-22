@@ -18,15 +18,16 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 30px;
+  height: 60px; /* Fixed height */
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgb(var(--gray-light));
-  padding: 0.75rem 1rem;
+  padding: 0 1rem;
   z-index: 999;
   transform: translateY(-100%);
   transition: transform 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .section-nav-header.visible {
@@ -35,34 +36,93 @@
 
 .section-nav-content {
   max-width: 1200px;
+  height: 100%;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: center;
+  position: relative;
 }
 
 .section-nav-labels {
   flex: 1;
   min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
 }
 
 .section-parent-label {
   font-size: 0.75rem;
   color: rgb(var(--gray));
-  margin-bottom: 0.2rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transform: translateY(-15px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-parent-label.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .section-current-label {
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: rgb(var(--black));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.section-current-label.has-parent {
+  font-size: 0.95rem;
+  top: 32px;
+  transform: translateY(0);
+}
+
+.section-current-label.entering {
+  animation: slideUpFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.section-current-label.exiting {
+  animation: slideUpFadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
 }
 
 /* Navigation buttons - Fixed position bottom right */
@@ -206,6 +266,24 @@
   body {
     background: #0f1419;
     color: #e0e0e0;
+  }
+
+  /* Main header - fix for dark mode */
+  header {
+    background: #1a1a1f;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  header h2 a {
+    color: #f0f0f0;
+  }
+
+  header nav a {
+    color: #e0e0e0;
+  }
+
+  header nav a.active {
+    border-bottom-color: var(--accent);
   }
 
   /* Main content area */

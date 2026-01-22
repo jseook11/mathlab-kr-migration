@@ -216,31 +216,64 @@ function getTagClass(tag: string): string {
 					const index = hTags.indexOf(currentTag);
 					if (index === -1) return;
 					
+					const previousIndex = currentIndex;
 					currentIndex = index;
 
 					// Show navigation header
 					navHeader.classList.add('visible');
 
-					if (currentTag.tagName === 'H2') {
-						// For H2: hide parent label, show only current
-						parentLabel.style.display = 'none';
-						currentLabel.textContent = cleanText(currentTag.textContent || '');
-					} else if (currentTag.tagName === 'H3' || currentTag.tagName === 'H4') {
-						// For H3/H4: find and show parent H2
-						let parentText = '';
+					const isH2 = currentTag.tagName === 'H2';
+					const wasH2 = previousIndex >= 0 && hTags[previousIndex]?.tagName === 'H2';
+
+					// Determine if we have a parent
+					let parentText = '';
+					if (!isH2) {
 						for (let i = currentIndex - 1; i >= 0; i--) {
 							if (hTags[i].tagName === 'H2') {
 								parentText = hTags[i].textContent || '';
 								break;
 							}
 						}
-						if (parentText) {
-							parentLabel.textContent = cleanText(parentText);
-							parentLabel.style.display = 'block';
-						} else {
-							parentLabel.style.display = 'none';
-						}
+					}
+
+					const hasParent = !isH2 && parentText;
+
+					// Handle animation for label transitions
+					if (previousIndex !== -1) {
+						// Trigger exit animation
+						currentLabel.classList.add('exiting');
+						setTimeout(() => {
+							currentLabel.classList.remove('exiting');
+							// Update content
+							currentLabel.textContent = cleanText(currentTag.textContent || '');
+							
+							// Update parent label
+							if (hasParent) {
+								parentLabel.textContent = cleanText(parentText);
+								parentLabel.classList.add('visible');
+								currentLabel.classList.add('has-parent');
+							} else {
+								parentLabel.classList.remove('visible');
+								currentLabel.classList.remove('has-parent');
+							}
+							
+							// Trigger enter animation
+							currentLabel.classList.add('entering');
+							setTimeout(() => {
+								currentLabel.classList.remove('entering');
+							}, 300);
+						}, 150);
+					} else {
+						// First time - no animation
 						currentLabel.textContent = cleanText(currentTag.textContent || '');
+						if (hasParent) {
+							parentLabel.textContent = cleanText(parentText);
+							parentLabel.classList.add('visible');
+							currentLabel.classList.add('has-parent');
+						} else {
+							parentLabel.classList.remove('visible');
+							currentLabel.classList.remove('has-parent');
+						}
 					}
 
 					// Update button states - always enable buttons unless at boundaries

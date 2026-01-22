@@ -41,7 +41,21 @@ body {
 	overflow-wrap: break-word;
 	color: rgb(var(--gray-dark));
 	font-size: 20px;
-	line-height: 1.7;
+	line-height: 1.8; /* Increased for better KaTeX formula alignment */
+}
+
+/* Ensure consistent line height with KaTeX formulas */
+p {
+	line-height: 1.8;
+}
+
+.prose p {
+	line-height: 1.8;
+}
+
+/* KaTeX inline formulas */
+.katex {
+	line-height: 1.8;
 }
 main {
 	width: 720px;
