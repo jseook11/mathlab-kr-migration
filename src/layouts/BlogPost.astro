@@ -216,6 +216,9 @@ function getTagClass(tag: string): string {
 					const index = hTags.indexOf(currentTag);
 					if (index === -1) return;
 					
+					// If we're already on this heading, don't re-animate
+					if (index === currentIndex) return;
+					
 					const previousIndex = currentIndex;
 					currentIndex = index;
 
@@ -287,13 +290,31 @@ function getTagClass(tag: string): string {
 					threshold: [0, 0.5, 1]
 				};
 
+				let observerTimeout: number | null = null;
+
 				const observer = new IntersectionObserver((entries) => {
-					// Process intersecting entries
-					const intersecting = entries.filter(e => e.isIntersecting);
-					if (intersecting.length > 0) {
-						// Update to the first intersecting element (top-most in viewport)
-						updateHeader(intersecting[0].target as HTMLElement);
+					// Debounce to prevent rapid firing
+					if (observerTimeout) {
+						clearTimeout(observerTimeout);
 					}
+
+					observerTimeout = window.setTimeout(() => {
+						// Get all currently intersecting entries
+						const intersecting = entries.filter(e => e.isIntersecting);
+						
+						if (intersecting.length > 0) {
+							// Sort by intersection ratio (most visible first)
+							intersecting.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+							
+							// Only update if the most visible element is different from current
+							const mostVisible = intersecting[0].target as HTMLElement;
+							const mostVisibleIndex = hTags.indexOf(mostVisible);
+							
+							if (mostVisibleIndex !== currentIndex) {
+								updateHeader(mostVisible);
+							}
+						}
+					}, 50); // 50ms debounce
 				}, observerOptions);
 
 				// Observe all headings
