@@ -104,11 +104,13 @@ function getTagClass(tag: string): string {
 					<div class="section-parent-label" id="section-parent-label"></div>
 					<div class="section-current-label" id="section-current-label">시작</div>
 				</div>
-				<div class="section-nav-buttons">
-					<button class="section-nav-btn" id="prev-section-btn">← 이전</button>
-					<button class="section-nav-btn" id="next-section-btn">다음 →</button>
-				</div>
 			</div>
+		</div>
+
+		<!-- Navigation Buttons (Fixed bottom-right) -->
+		<div class="section-nav-buttons">
+			<button class="section-nav-btn" id="prev-section-btn" aria-label="이전 섹션">↑</button>
+			<button class="section-nav-btn" id="next-section-btn" aria-label="다음 섹션">↓</button>
 		</div>
 
 		<Header />
@@ -157,9 +159,9 @@ function getTagClass(tag: string): string {
 						{tags && tags.length > 0 && (
 							<div class="post-tags">
 								{tags.map((tag) => (
-									<a href={`/blog/tag/${tag}`} class={`tag ${getTagClass(tag)}`}>
+									<span class={`tag ${getTagClass(tag)}`}>
 										{tag}
-									</a>
+									</span>
 								))}
 							</div>
 						)}
@@ -241,50 +243,83 @@ function getTagClass(tag: string): string {
 						currentLabel.textContent = cleanText(currentTag.textContent || '');
 					}
 
-					// Update button states
+					// Update button states - always enable buttons unless at boundaries
 					prevBtn.disabled = currentIndex === 0;
 					nextBtn.disabled = currentIndex === hTags.length - 1;
 				}
 
-				// Set up IntersectionObserver
+				// Set up IntersectionObserver with adjusted margins for better detection
 				const observerOptions = {
-					rootMargin: '-100px 0px -70% 0px',
-					threshold: 0
+					rootMargin: '-20% 0px -60% 0px',
+					threshold: [0, 0.5, 1]
 				};
 
 				const observer = new IntersectionObserver((entries) => {
-					entries.forEach(entry => {
-						if (entry.isIntersecting) {
-							updateHeader(entry.target as HTMLElement);
-						}
-					});
+					// Process intersecting entries
+					const intersecting = entries.filter(e => e.isIntersecting);
+					if (intersecting.length > 0) {
+						// Update to the first intersecting element (top-most in viewport)
+						updateHeader(intersecting[0].target as HTMLElement);
+					}
 				}, observerOptions);
 
 				// Observe all headings
 				hTags.forEach(tag => observer.observe(tag));
 
-				// Navigation button handlers
+				// Navigation button handlers with proper offset
 				prevBtn.addEventListener('click', () => {
 					if (currentIndex > 0) {
-						hTags[currentIndex - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+						const targetElement = hTags[currentIndex - 1];
+						const offset = 100; // Account for fixed header
+						const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+						const offsetPosition = elementPosition - offset;
+						
+						window.scrollTo({
+							top: offsetPosition,
+							behavior: 'smooth'
+						});
+					} else if (currentIndex === 0) {
+						// Go to top of page
+						window.scrollTo({
+							top: 0,
+							behavior: 'smooth'
+						});
 					}
 				});
 
 				nextBtn.addEventListener('click', () => {
 					if (currentIndex < hTags.length - 1) {
-						hTags[currentIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+						const targetElement = hTags[currentIndex + 1];
+						const offset = 100; // Account for fixed header
+						const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+						const offsetPosition = elementPosition - offset;
+						
+						window.scrollTo({
+							top: offsetPosition,
+							behavior: 'smooth'
+						});
 					}
 				});
 
 				// Hide navigation when at top
-				let lastScrollY = window.scrollY;
 				window.addEventListener('scroll', () => {
 					const scrollY = window.scrollY;
 					if (scrollY < 200) {
 						navHeader.classList.remove('visible');
+						currentIndex = -1;
 					}
-					lastScrollY = scrollY;
 				});
+
+				// Initialize: check if any heading is already in viewport
+				setTimeout(() => {
+					for (let i = 0; i < hTags.length; i++) {
+						const rect = hTags[i].getBoundingClientRect();
+						if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
+							updateHeader(hTags[i]);
+							break;
+						}
+					}
+				}, 100);
 			});
 		</script>
 
