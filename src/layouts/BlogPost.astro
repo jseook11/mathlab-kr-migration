@@ -4,13 +4,51 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
+import { parseSource } from '../utils/sourceParser';
+import '../styles/math.css';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { 
+	title, 
+	description, 
+	pubDate, 
+	updatedDate, 
+	heroImage,
+	correctRate,
+	source,
+	sourceDetail,
+	tags,
+	difficulty
+} = Astro.props;
+
+// Parse source if provided
+const parsedSource = source ? parseSource(source) : null;
+
+// Determine correct rate color class
+function getCorrectRateClass(rate: number | undefined): string {
+	if (!rate) return '';
+	if (rate < 20) return 'very-hard';
+	if (rate < 50) return 'hard';
+	if (rate < 80) return 'medium';
+	return 'easy';
+}
+
+// Map tag names to CSS classes
+function getTagClass(tag: string): string {
+	const tagMap: Record<string, string> = {
+		'미적분': 'calculus',
+		'선형대수': 'linear-algebra',
+		'확률론': 'probability',
+		'기하': 'geometry',
+		'킬러문제': 'killer',
+		'극한': 'limit'
+	};
+	return tagMap[tag] || 'default';
+}
 ---
 
-<html lang="en">
+<html lang="ko">
 	<head>
 		<BaseHead title={title} description={description} />
 		<style>
@@ -55,6 +93,23 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 	</head>
 
 	<body>
+		<!-- Scroll Progress Bar -->
+		<div id="scroll-progress"></div>
+
+		<!-- Dynamic Section Navigation Header -->
+		<div class="section-nav-header" id="section-nav-header">
+			<div class="section-nav-content">
+				<div class="section-nav-labels">
+					<div class="section-parent-label" id="section-parent-label"></div>
+					<div class="section-current-label" id="section-current-label">시작</div>
+				</div>
+				<div class="section-nav-buttons">
+					<button class="section-nav-btn" id="prev-section-btn">← 이전</button>
+					<button class="section-nav-btn" id="next-section-btn">다음 →</button>
+				</div>
+			</div>
+		</div>
+
 		<Header />
 		<main>
 			<article>
@@ -74,12 +129,223 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 							}
 						</div>
 						<h1>{title}</h1>
+						
+						<!-- Correct Rate and Source Display -->
+						{(correctRate !== undefined || parsedSource) && (
+							<div class="post-metadata">
+								{correctRate !== undefined && (
+									<div class="metadata-item">
+										<span class="metadata-icon">📊</span>
+										<span class="metadata-label">정답률:</span>
+										<span class={`correct-rate ${getCorrectRateClass(correctRate)}`}>
+											{correctRate}%
+										</span>
+									</div>
+								)}
+								{parsedSource && (
+									<div class="metadata-item">
+										<span class="metadata-icon">📝</span>
+										<span class="metadata-label">출처:</span>
+										<span>{parsedSource} {sourceDetail || ''}</span>
+									</div>
+								)}
+							</div>
+						)}
+
+						<!-- Tags Display -->
+						{tags && tags.length > 0 && (
+							<div class="post-tags">
+								{tags.map((tag) => (
+									<a href={`/blog/tag/${tag}`} class={`tag ${getTagClass(tag)}`}>
+										{tag}
+									</a>
+								))}
+							</div>
+						)}
+
 						<hr />
 					</div>
-					<slot />
+					<div id="post-content">
+						<slot />
+					</div>
 				</div>
 			</article>
 		</main>
 		<Footer />
+
+		<!-- Dynamic Section Navigation Script -->
+		<script>
+			// Wait for DOM to be ready
+			document.addEventListener('DOMContentLoaded', () => {
+				const postContent = document.getElementById('post-content');
+				if (!postContent) return;
+
+				// Get all heading elements (h2, h3, h4)
+				const hTags = Array.from(postContent.querySelectorAll('h2, h3, h4')) as HTMLElement[];
+				
+				if (hTags.length === 0) return;
+
+				// Assign IDs to headings if they don't have one
+				hTags.forEach((tag, index) => {
+					if (!tag.id) {
+						tag.id = `heading-${index}`;
+					}
+				});
+
+				// Get navigation elements
+				const navHeader = document.getElementById('section-nav-header');
+				const parentLabel = document.getElementById('section-parent-label');
+				const currentLabel = document.getElementById('section-current-label');
+				const prevBtn = document.getElementById('prev-section-btn') as HTMLButtonElement;
+				const nextBtn = document.getElementById('next-section-btn') as HTMLButtonElement;
+
+				if (!navHeader || !parentLabel || !currentLabel || !prevBtn || !nextBtn) return;
+
+				let currentIndex = -1;
+
+				// Clean text content (remove extra whitespace, special characters)
+				function cleanText(text: string): string {
+					return text.replace(/[#¶]/g, '').trim();
+				}
+
+				// Update header based on current section
+				function updateHeader(currentTag: HTMLElement) {
+					const index = hTags.indexOf(currentTag);
+					if (index === -1) return;
+					
+					currentIndex = index;
+
+					// Show navigation header
+					navHeader.classList.add('visible');
+
+					if (currentTag.tagName === 'H2') {
+						// For H2: hide parent label, show only current
+						parentLabel.style.display = 'none';
+						currentLabel.textContent = cleanText(currentTag.textContent || '');
+					} else if (currentTag.tagName === 'H3' || currentTag.tagName === 'H4') {
+						// For H3/H4: find and show parent H2
+						let parentText = '';
+						for (let i = currentIndex - 1; i >= 0; i--) {
+							if (hTags[i].tagName === 'H2') {
+								parentText = hTags[i].textContent || '';
+								break;
+							}
+						}
+						if (parentText) {
+							parentLabel.textContent = cleanText(parentText);
+							parentLabel.style.display = 'block';
+						} else {
+							parentLabel.style.display = 'none';
+						}
+						currentLabel.textContent = cleanText(currentTag.textContent || '');
+					}
+
+					// Update button states
+					prevBtn.disabled = currentIndex === 0;
+					nextBtn.disabled = currentIndex === hTags.length - 1;
+				}
+
+				// Set up IntersectionObserver
+				const observerOptions = {
+					rootMargin: '-100px 0px -70% 0px',
+					threshold: 0
+				};
+
+				const observer = new IntersectionObserver((entries) => {
+					entries.forEach(entry => {
+						if (entry.isIntersecting) {
+							updateHeader(entry.target as HTMLElement);
+						}
+					});
+				}, observerOptions);
+
+				// Observe all headings
+				hTags.forEach(tag => observer.observe(tag));
+
+				// Navigation button handlers
+				prevBtn.addEventListener('click', () => {
+					if (currentIndex > 0) {
+						hTags[currentIndex - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+					}
+				});
+
+				nextBtn.addEventListener('click', () => {
+					if (currentIndex < hTags.length - 1) {
+						hTags[currentIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+					}
+				});
+
+				// Hide navigation when at top
+				let lastScrollY = window.scrollY;
+				window.addEventListener('scroll', () => {
+					const scrollY = window.scrollY;
+					if (scrollY < 200) {
+						navHeader.classList.remove('visible');
+					}
+					lastScrollY = scrollY;
+				});
+			});
+		</script>
+
+		<!-- Scroll Progress Bar Script -->
+		<script>
+			function updateScrollProgress() {
+				const progressBar = document.getElementById('scroll-progress');
+				if (!progressBar) return;
+
+				const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+				const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+				
+				if (scrollHeight > 0) {
+					const progress = (scrollTop / scrollHeight) * 100;
+					progressBar.style.width = progress + '%';
+				}
+			}
+
+			window.addEventListener('scroll', updateScrollProgress);
+			window.addEventListener('resize', updateScrollProgress);
+			document.addEventListener('DOMContentLoaded', updateScrollProgress);
+		</script>
+
+		<!-- Mobile Formula Zoom (Optional - activated on touch) -->
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+				if (!isMobile) return;
+
+				// Create modal for zooming formulas
+				const modal = document.createElement('div');
+				modal.className = 'formula-modal';
+				modal.innerHTML = `
+					<div class="formula-modal-content">
+						<button class="formula-modal-close">✕</button>
+						<div class="formula-modal-body"></div>
+					</div>
+				`;
+				document.body.appendChild(modal);
+
+				const modalContent = modal.querySelector('.formula-modal-body') as HTMLElement;
+				const closeBtn = modal.querySelector('.formula-modal-close') as HTMLButtonElement;
+
+				closeBtn.addEventListener('click', () => {
+					modal.classList.remove('active');
+				});
+
+				modal.addEventListener('click', (e) => {
+					if (e.target === modal) {
+						modal.classList.remove('active');
+					}
+				});
+
+				// Add touch listeners to formulas
+				const formulas = document.querySelectorAll('.katex-display, .math-display');
+				formulas.forEach(formula => {
+					formula.addEventListener('click', () => {
+						modalContent.innerHTML = (formula as HTMLElement).innerHTML;
+						modal.classList.add('active');
+					});
+				});
+			});
+		</script>
 	</body>
 </html>
