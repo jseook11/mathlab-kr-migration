@@ -357,8 +357,3 @@
 html {
   scroll-behavior: smooth;
 }
-
-/* Add padding to article to account for fixed header */
-body.has-section-nav article {
-  padding-top: 4rem;
-}

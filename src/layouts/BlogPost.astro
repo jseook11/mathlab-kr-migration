@@ -294,7 +294,7 @@ function getTagClass(tag: string): string {
 				if (!progressBar) return;
 
 				const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-				const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+				const scrollTop = window.scrollY;
 				
 				if (scrollHeight > 0) {
 					const progress = (scrollTop / scrollHeight) * 100;
@@ -310,8 +310,9 @@ function getTagClass(tag: string): string {
 		<!-- Mobile Formula Zoom (Optional - activated on touch) -->
 		<script>
 			document.addEventListener('DOMContentLoaded', () => {
-				const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-				if (!isMobile) return;
+				// Use feature detection instead of user agent detection
+				const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+				if (!isTouchDevice) return;
 
 				// Create modal for zooming formulas
 				const modal = document.createElement('div');
