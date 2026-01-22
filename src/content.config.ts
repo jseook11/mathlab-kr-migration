@@ -12,6 +12,12 @@ const blog = defineCollection({
 		pubDate: z.coerce.date(),
 		updatedDate: z.coerce.date().optional(),
 		heroImage: z.string().optional(),
+		// Math blog specific fields
+		correctRate: z.number().optional(),  // 정답률 %
+		source: z.string().optional(),       // 출처 코드 (예: "202611")
+		sourceDetail: z.string().optional(), // 추가 정보 (예: "30번")
+		tags: z.array(z.string()).optional(), // 태그 배열
+		difficulty: z.enum(['easy', 'medium', 'hard']).optional()
 	}),
 });
 

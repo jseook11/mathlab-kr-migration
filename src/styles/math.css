@@ -1,0 +1,496 @@
+/* Math Blog Specific Styles */
+
+/* Scroll Progress Bar */
+#scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  z-index: 1000;
+  transition: width 0.1s ease-out;
+}
+
+/* Dynamic Section Navigation Header */
+.section-nav-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px; /* Fixed height */
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgb(var(--gray-light));
+  padding: 0 1rem;
+  z-index: 999;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.section-nav-header.visible {
+  transform: translateY(0);
+}
+
+.section-nav-content {
+  max-width: 1200px;
+  height: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.section-nav-labels {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.section-parent-label {
+  font-size: 0.75rem;
+  color: rgb(var(--gray));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transform: translateY(-15px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-parent-label.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-current-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgb(var(--black));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.section-current-label.has-parent {
+  font-size: 0.95rem;
+  top: 32px;
+  transform: translateY(0);
+}
+
+.section-current-label.entering {
+  animation: slideUpFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.section-current-label.exiting {
+  animation: slideUpFadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+}
+
+/* Navigation buttons - Fixed position bottom right */
+.section-nav-buttons {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 998;
+}
+
+.section-nav-btn {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgb(var(--gray-light));
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: rgb(var(--gray-dark));
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-nav-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+  transform: scale(1.1);
+}
+
+.section-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Correct Rate and Source Display */
+.post-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgb(var(--gray-light));
+  border-radius: 8px;
+}
+
+.metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.metadata-icon {
+  font-size: 1.2rem;
+}
+
+.metadata-label {
+  font-weight: 600;
+  color: rgb(var(--gray-dark));
+}
+
+.correct-rate {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: bold;
+  color: white;
+}
+
+.correct-rate.very-hard {
+  background: #ff4444;
+}
+
+.correct-rate.hard {
+  background: #ff9944;
+}
+
+.correct-rate.medium {
+  background: #ffdd44;
+  color: rgb(var(--gray-dark));
+}
+
+.correct-rate.easy {
+  background: #44ff44;
+  color: rgb(var(--gray-dark));
+}
+
+/* Tag System */
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+.tag {
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.tag.calculus {
+  background: #4a90e2;
+}
+
+.tag.linear-algebra {
+  background: #7ed321;
+}
+
+.tag.probability {
+  background: #bd10e0;
+}
+
+.tag.geometry {
+  background: #f5a623;
+}
+
+.tag.killer {
+  background: #d0021b;
+}
+
+.tag.limit {
+  background: #50e3c2;
+}
+
+.tag.default {
+  background: #9b9b9b;
+}
+
+/* Dark Mode for Math Formulas (KaTeX) */
+@media (prefers-color-scheme: dark) {
+  /* Update body background for dark mode */
+  body {
+    background: #0f1419;
+    color: #e0e0e0;
+  }
+
+  /* Main header - fix for dark mode */
+  header {
+    background: #1a1a1f;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  header h2 a {
+    color: #f0f0f0;
+  }
+
+  header nav a {
+    color: #e0e0e0;
+  }
+
+  header nav a.active {
+    border-bottom-color: var(--accent);
+  }
+
+  /* Main content area */
+  .prose {
+    color: #e0e0e0 !important;
+  }
+
+  /* Section navigation header */
+  .section-nav-header {
+    background: rgba(20, 20, 25, 0.95);
+    border-bottom-color: rgba(150, 150, 150, 0.3);
+  }
+
+  .section-parent-label {
+    color: #a0a0a0;
+  }
+
+  .section-current-label {
+    color: #f0f0f0;
+  }
+
+  /* Navigation buttons */
+  .section-nav-btn {
+    background: rgba(40, 40, 45, 0.95);
+    border-color: rgba(150, 150, 150, 0.3);
+    color: #f0f0f0;
+  }
+
+  .section-nav-btn:hover:not(:disabled) {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* Metadata area */
+  .post-metadata {
+    background: rgba(40, 40, 45, 0.5);
+  }
+
+  .metadata-label {
+    color: #f0f0f0;
+  }
+
+  .metadata-item {
+    color: #e0e0e0;
+  }
+
+  /* KaTeX formulas in dark mode */
+  .katex {
+    color: #e0e0e0;
+  }
+
+  .katex .mord,
+  .katex .mrel,
+  .katex .mbin,
+  .katex .mopen,
+  .katex .mclose,
+  .katex .mpunct {
+    color: #f0f0f0;
+  }
+
+  .katex .mop {
+    color: #a8daff;
+  }
+
+  .katex .strut {
+    color: #e0e0e0;
+  }
+
+  /* Formula modal dark mode */
+  .formula-modal-content {
+    background: #1a1a1f;
+    color: #e0e0e0;
+  }
+}
+
+/* Long Formula Horizontal Scroll */
+.katex-display,
+.math-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--gray), 0.5) transparent;
+  padding: 1rem 0;
+}
+
+.katex-display::-webkit-scrollbar {
+  height: 6px;
+}
+
+.katex-display::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.katex-display::-webkit-scrollbar-thumb {
+  background: rgba(var(--gray), 0.5);
+  border-radius: 3px;
+}
+
+.katex-display::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--gray), 0.7);
+}
+
+/* Mobile Formula Modal */
+.formula-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.formula-modal.active {
+  display: flex;
+}
+
+.formula-modal-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  position: relative;
+}
+
+.formula-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgb(var(--gray-dark));
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .formula-modal-content {
+    background: rgb(var(--black));
+    color: rgb(var(--gray-light));
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .section-nav-header {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .section-parent-label {
+    font-size: 0.7rem;
+  }
+
+  .section-current-label {
+    font-size: 0.85rem;
+  }
+
+  /* Mobile: buttons bottom-right */
+  .section-nav-buttons {
+    bottom: 1.5rem;
+    right: 1rem;
+  }
+
+  .section-nav-btn {
+    padding: 0.6rem;
+    font-size: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .post-metadata {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .post-tags {
+    gap: 0.4rem;
+  }
+
+  .tag {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+/* Desktop: buttons center-right bottom */
+@media (min-width: 769px) {
+  .section-nav-buttons {
+    right: 50%;
+    transform: translateX(calc(50% + 360px)); /* Half of max content width (720px) */
+  }
+}
+
+/* Smooth Scroll for Navigation */
+html {
+  scroll-behavior: smooth;
+}

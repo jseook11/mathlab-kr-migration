@@ -41,7 +41,21 @@ body {
 	overflow-wrap: break-word;
 	color: rgb(var(--gray-dark));
 	font-size: 20px;
-	line-height: 1.7;
+	line-height: 1.8; /* Increased for better KaTeX formula alignment */
+}
+
+/* Ensure consistent line height with KaTeX formulas */
+p {
+	line-height: 1.8;
+}
+
+.prose p {
+	line-height: 1.8;
+}
+
+/* KaTeX inline formulas */
+.katex {
+	line-height: 1.8;
 }
 main {
 	width: 720px;
@@ -133,6 +147,48 @@ hr {
 	}
 	main {
 		padding: 1em;
+	}
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--gray-gradient: rgba(30, 30, 40, 50%), #0f1419;
+	}
+	
+	body {
+		background: #0f1419;
+		background-image: linear-gradient(var(--gray-gradient));
+		color: #e0e0e0;
+	}
+	
+	h1, h2, h3, h4, h5, h6 {
+		color: #f0f0f0;
+	}
+	
+	a {
+		color: #5c9dff;
+	}
+	
+	a:hover {
+		color: #7eb4ff;
+	}
+	
+	code {
+		background-color: rgba(100, 100, 120, 0.3);
+		color: #e0e0e0;
+	}
+	
+	pre {
+		background-color: rgba(30, 30, 40, 0.8);
+	}
+	
+	blockquote {
+		border-left-color: #5c9dff;
+	}
+	
+	hr {
+		border-top-color: rgba(150, 150, 150, 0.3);
 	}
 }
 

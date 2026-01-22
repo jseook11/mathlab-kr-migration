@@ -4,13 +4,52 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
+import { parseSource } from '../utils/sourceParser';
+import '../styles/math.css';
+import 'katex/dist/katex.min.css';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { 
+	title, 
+	description, 
+	pubDate, 
+	updatedDate, 
+	heroImage,
+	correctRate,
+	source,
+	sourceDetail,
+	tags,
+	difficulty
+} = Astro.props;
+
+// Parse source if provided
+const parsedSource = source ? parseSource(source) : null;
+
+// Determine correct rate color class
+function getCorrectRateClass(rate: number | undefined): string {
+	if (!rate) return '';
+	if (rate < 20) return 'very-hard';
+	if (rate < 50) return 'hard';
+	if (rate < 80) return 'medium';
+	return 'easy';
+}
+
+// Map tag names to CSS classes
+function getTagClass(tag: string): string {
+	const tagMap: Record<string, string> = {
+		'미적분': 'calculus',
+		'선형대수': 'linear-algebra',
+		'확률론': 'probability',
+		'기하': 'geometry',
+		'킬러문제': 'killer',
+		'극한': 'limit'
+	};
+	return tagMap[tag] || 'default';
+}
 ---
 
-<html lang="en">
+<html lang="ko">
 	<head>
 		<BaseHead title={title} description={description} />
 		<style>
@@ -55,6 +94,25 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 	</head>
 
 	<body>
+		<!-- Scroll Progress Bar -->
+		<div id="scroll-progress"></div>
+
+		<!-- Dynamic Section Navigation Header -->
+		<div class="section-nav-header" id="section-nav-header">
+			<div class="section-nav-content">
+				<div class="section-nav-labels">
+					<div class="section-parent-label" id="section-parent-label"></div>
+					<div class="section-current-label" id="section-current-label">시작</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Navigation Buttons (Fixed bottom-right) -->
+		<div class="section-nav-buttons">
+			<button class="section-nav-btn" id="prev-section-btn" aria-label="이전 섹션">↑</button>
+			<button class="section-nav-btn" id="next-section-btn" aria-label="다음 섹션">↓</button>
+		</div>
+
 		<Header />
 		<main>
 			<article>
@@ -74,12 +132,311 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 							}
 						</div>
 						<h1>{title}</h1>
+						
+						<!-- Correct Rate and Source Display -->
+						{(correctRate !== undefined || parsedSource) && (
+							<div class="post-metadata">
+								{correctRate !== undefined && (
+									<div class="metadata-item">
+										<span class="metadata-icon">📊</span>
+										<span class="metadata-label">정답률:</span>
+										<span class={`correct-rate ${getCorrectRateClass(correctRate)}`}>
+											{correctRate}%
+										</span>
+									</div>
+								)}
+								{parsedSource && (
+									<div class="metadata-item">
+										<span class="metadata-icon">📝</span>
+										<span class="metadata-label">출처:</span>
+										<span>{parsedSource} {sourceDetail || ''}</span>
+									</div>
+								)}
+							</div>
+						)}
+
+						<!-- Tags Display -->
+						{tags && tags.length > 0 && (
+							<div class="post-tags">
+								{tags.map((tag) => (
+									<span class={`tag ${getTagClass(tag)}`}>
+										{tag}
+									</span>
+								))}
+							</div>
+						)}
+
 						<hr />
 					</div>
-					<slot />
+					<div id="post-content">
+						<slot />
+					</div>
 				</div>
 			</article>
 		</main>
 		<Footer />
+
+		<!-- Dynamic Section Navigation Script -->
+		<script>
+			// Wait for DOM to be ready
+			document.addEventListener('DOMContentLoaded', () => {
+				const postContent = document.getElementById('post-content');
+				if (!postContent) return;
+
+				// Get all heading elements (h2, h3, h4)
+				const hTags = Array.from(postContent.querySelectorAll('h2, h3, h4')) as HTMLElement[];
+				
+				if (hTags.length === 0) return;
+
+				// Assign IDs to headings if they don't have one
+				hTags.forEach((tag, index) => {
+					if (!tag.id) {
+						tag.id = `heading-${index}`;
+					}
+				});
+
+				// Get navigation elements
+				const navHeader = document.getElementById('section-nav-header');
+				const parentLabel = document.getElementById('section-parent-label');
+				const currentLabel = document.getElementById('section-current-label');
+				const prevBtn = document.getElementById('prev-section-btn') as HTMLButtonElement;
+				const nextBtn = document.getElementById('next-section-btn') as HTMLButtonElement;
+
+				if (!navHeader || !parentLabel || !currentLabel || !prevBtn || !nextBtn) return;
+
+				let currentIndex = -1;
+
+				// Clean text content (remove extra whitespace, special characters)
+				function cleanText(text: string): string {
+					return text.replace(/[#¶]/g, '').trim();
+				}
+
+				// Update header based on current section
+				function updateHeader(currentTag: HTMLElement) {
+					const index = hTags.indexOf(currentTag);
+					if (index === -1) return;
+					
+					// If we're already on this heading, don't re-animate
+					if (index === currentIndex) return;
+					
+					const previousIndex = currentIndex;
+					currentIndex = index;
+
+					// Show navigation header
+					navHeader.classList.add('visible');
+
+					const isH2 = currentTag.tagName === 'H2';
+					const wasH2 = previousIndex >= 0 && hTags[previousIndex]?.tagName === 'H2';
+
+					// Determine if we have a parent
+					let parentText = '';
+					if (!isH2) {
+						for (let i = currentIndex - 1; i >= 0; i--) {
+							if (hTags[i].tagName === 'H2') {
+								parentText = hTags[i].textContent || '';
+								break;
+							}
+						}
+					}
+
+					const hasParent = !isH2 && parentText;
+
+					// Handle animation for label transitions
+					if (previousIndex !== -1) {
+						// Trigger exit animation
+						currentLabel.classList.add('exiting');
+						setTimeout(() => {
+							currentLabel.classList.remove('exiting');
+							// Update content
+							currentLabel.textContent = cleanText(currentTag.textContent || '');
+							
+							// Update parent label
+							if (hasParent) {
+								parentLabel.textContent = cleanText(parentText);
+								parentLabel.classList.add('visible');
+								currentLabel.classList.add('has-parent');
+							} else {
+								parentLabel.classList.remove('visible');
+								currentLabel.classList.remove('has-parent');
+							}
+							
+							// Trigger enter animation
+							currentLabel.classList.add('entering');
+							setTimeout(() => {
+								currentLabel.classList.remove('entering');
+							}, 300);
+						}, 150);
+					} else {
+						// First time - no animation
+						currentLabel.textContent = cleanText(currentTag.textContent || '');
+						if (hasParent) {
+							parentLabel.textContent = cleanText(parentText);
+							parentLabel.classList.add('visible');
+							currentLabel.classList.add('has-parent');
+						} else {
+							parentLabel.classList.remove('visible');
+							currentLabel.classList.remove('has-parent');
+						}
+					}
+
+					// Update button states - always enable buttons unless at boundaries
+					prevBtn.disabled = currentIndex === 0;
+					nextBtn.disabled = currentIndex === hTags.length - 1;
+				}
+
+				// Set up IntersectionObserver with adjusted margins for better detection
+				const observerOptions = {
+					rootMargin: '-20% 0px -60% 0px',
+					threshold: [0, 0.5, 1]
+				};
+
+				let observerTimeout: number | null = null;
+
+				const observer = new IntersectionObserver((entries) => {
+					// Debounce to prevent rapid firing
+					if (observerTimeout) {
+						clearTimeout(observerTimeout);
+					}
+
+					observerTimeout = window.setTimeout(() => {
+						// Get all currently intersecting entries
+						const intersecting = entries.filter(e => e.isIntersecting);
+						
+						if (intersecting.length > 0) {
+							// Sort by intersection ratio (most visible first)
+							intersecting.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+							
+							// Only update if the most visible element is different from current
+							const mostVisible = intersecting[0].target as HTMLElement;
+							const mostVisibleIndex = hTags.indexOf(mostVisible);
+							
+							if (mostVisibleIndex !== currentIndex) {
+								updateHeader(mostVisible);
+							}
+						}
+					}, 50); // 50ms debounce
+				}, observerOptions);
+
+				// Observe all headings
+				hTags.forEach(tag => observer.observe(tag));
+
+				// Navigation button handlers with proper offset
+				prevBtn.addEventListener('click', () => {
+					if (currentIndex > 0) {
+						const targetElement = hTags[currentIndex - 1];
+						const offset = 100; // Account for fixed header
+						const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+						const offsetPosition = elementPosition - offset;
+						
+						window.scrollTo({
+							top: offsetPosition,
+							behavior: 'smooth'
+						});
+					} else if (currentIndex === 0) {
+						// Go to top of page
+						window.scrollTo({
+							top: 0,
+							behavior: 'smooth'
+						});
+					}
+				});
+
+				nextBtn.addEventListener('click', () => {
+					if (currentIndex < hTags.length - 1) {
+						const targetElement = hTags[currentIndex + 1];
+						const offset = 100; // Account for fixed header
+						const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+						const offsetPosition = elementPosition - offset;
+						
+						window.scrollTo({
+							top: offsetPosition,
+							behavior: 'smooth'
+						});
+					}
+				});
+
+				// Hide navigation when at top
+				window.addEventListener('scroll', () => {
+					const scrollY = window.scrollY;
+					if (scrollY < 200) {
+						navHeader.classList.remove('visible');
+						currentIndex = -1;
+					}
+				});
+
+				// Initialize: check if any heading is already in viewport
+				setTimeout(() => {
+					for (let i = 0; i < hTags.length; i++) {
+						const rect = hTags[i].getBoundingClientRect();
+						if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
+							updateHeader(hTags[i]);
+							break;
+						}
+					}
+				}, 100);
+			});
+		</script>
+
+		<!-- Scroll Progress Bar Script -->
+		<script>
+			function updateScrollProgress() {
+				const progressBar = document.getElementById('scroll-progress');
+				if (!progressBar) return;
+
+				const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+				const scrollTop = window.scrollY;
+				
+				if (scrollHeight > 0) {
+					const progress = (scrollTop / scrollHeight) * 100;
+					progressBar.style.width = progress + '%';
+				}
+			}
+
+			window.addEventListener('scroll', updateScrollProgress);
+			window.addEventListener('resize', updateScrollProgress);
+			document.addEventListener('DOMContentLoaded', updateScrollProgress);
+		</script>
+
+		<!-- Mobile Formula Zoom (Optional - activated on touch) -->
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				// Use feature detection instead of user agent detection
+				const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+				if (!isTouchDevice) return;
+
+				// Create modal for zooming formulas
+				const modal = document.createElement('div');
+				modal.className = 'formula-modal';
+				modal.innerHTML = `
+					<div class="formula-modal-content">
+						<button class="formula-modal-close">✕</button>
+						<div class="formula-modal-body"></div>
+					</div>
+				`;
+				document.body.appendChild(modal);
+
+				const modalContent = modal.querySelector('.formula-modal-body') as HTMLElement;
+				const closeBtn = modal.querySelector('.formula-modal-close') as HTMLButtonElement;
+
+				closeBtn.addEventListener('click', () => {
+					modal.classList.remove('active');
+				});
+
+				modal.addEventListener('click', (e) => {
+					if (e.target === modal) {
+						modal.classList.remove('active');
+					}
+				});
+
+				// Add touch listeners to formulas
+				const formulas = document.querySelectorAll('.katex-display, .math-display');
+				formulas.forEach(formula => {
+					formula.addEventListener('click', () => {
+						modalContent.innerHTML = (formula as HTMLElement).innerHTML;
+						modal.classList.add('active');
+					});
+				});
+			});
+		</script>
 	</body>
 </html>
