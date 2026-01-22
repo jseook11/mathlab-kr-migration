@@ -2,6 +2,8 @@
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 import cloudflare from "@astrojs/cloudflare";
 
@@ -14,4 +16,11 @@ export default defineConfig({
 			enabled: true,
 		},
 	}),
+	markdown: {
+		remarkPlugins: [remarkMath],
+		rehypePlugins: [[rehypeKatex, {
+		// 수식 번호를 없애고 싶으시면 설정을 추가할 수 있습니다.
+		// throwOnError: false
+		}]],
+	},
 });
